@@ -1,0 +1,14 @@
+{
+  "hosting": {
+    "site": "cbsm-excell",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "**/.*",
+      "**/node_modules/**",
+      "scratch/**",
+      "server.js"
+    ]
+  }
+}

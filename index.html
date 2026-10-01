@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumo Fácil de Planilhas</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Biblioteca Chart.js para gráficos visuais acessíveis -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Biblioteca jsPDF para geração client-side de relatórios PDF -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">📊</span>
+                <div>
+                    <h1>Resumo Fácil de Planilhas</h1>
+                    <p class="subtitle">Leitura simples, clara e acessível de dados</p>
+                </div>
+            </div>
+            <div class="accessibility-bar" aria-label="Acessibilidade">
+                <button id="btnFontDecrease" class="btn-acc" title="Diminuir letra">A-</button>
+                <button id="btnFontNormal" class="btn-acc" title="Tamanho normal">A</button>
+                <button id="btnFontIncrease" class="btn-acc" title="Aumentar letra">A+</button>
+                <button id="btnHighContrast" class="btn-acc" title="Alto Contraste">🌓 Contraste</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <section id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="Toque ou arraste para carregar a planilha">
+            <div class="drop-content">
+                <span class="upload-icon">📂</span>
+                <h2>Arraste sua planilha aqui</h2>
+                <p>Ou toque no botão para escolher do celular ou computador</p>
+                <label for="fileInput" class="btn-primary">📁 Escolher Arquivo</label>
+                <input type="file" id="fileInput" accept=".xlsx, .xls, .xlsm, .xlsb, .csv, .tsv, .txt, .ods, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, text/csv, text/plain" style="display: none;">
+                <p class="file-hint">Formatos aceitos: Excel (.xlsx, .xls), CSV, TSV, ODS ou TXT</p>
+            </div>
+        </section>
+
+        <section id="resultsSection" class="results-section" style="display: none;">
+            <div class="actions-bar">
+                <div class="file-info-box">
+                    <span class="file-badge">📄 Arquivo: <strong id="fileNameDisplay"></strong></span>
+                    <span id="sheetSelectorArea" class="sheet-selector-area"></span>
+                </div>
+                <div class="action-buttons">
+                    <button id="btnToggleCurrency" class="btn-action btn-currency" title="Alternar formato: Moeda (R$) ou Número Geral">💵 R$ Moeda</button>
+                    <button id="btnSpeak" class="btn-action btn-audio" title="Ouvir o resumo falado em voz alta">🔊 Ouvir</button>
+                    <button id="btnExportTxt" class="btn-action btn-txt" title="Ver, copiar e baixar o resumo em texto (.txt)">📝 Resumo TXT</button>
+                    <button id="btnExportPdf" class="btn-action btn-pdf" title="Gerar e baixar relatório completo em PDF">📄 Baixar PDF</button>
+                    <button id="btnPrint" class="btn-action btn-print" title="Imprimir relatório">🖨️ Imprimir</button>
+                    <button id="btnNewFile" class="btn-action btn-secondary" title="Carregar uma nova planilha">🔄 Trocar</button>
+                </div>
+            </div>
+
+            <article class="narrative-card">
+                <div class="card-header">
+                    <span class="card-icon">💡</span>
+                    <h2>O que esta planilha mostra (Resumo Explicado)</h2>
+                </div>
+                <div id="narrativeText" class="narrative-content"></div>
+            </article>
+
+            <div class="cards-grid" id="metricsGrid"></div>
+
+            <section class="section-card">
+                <div class="card-header">
+                    <span class="card-icon">⭐</span>
+                    <h2>Maiores Destaques Identificados</h2>
+                </div>
+                <div id="topItemsList" class="top-items-container"></div>
+            </section>
+
+            <!-- Seção de Modelos de Gráficos Selecionáveis (5 Templates) -->
+            <section class="section-card studio-section">
+                <div class="card-header">
+                    <span class="card-icon">📊</span>
+                    <div>
+                        <h2>Modelos de Gráficos Selecionáveis</h2>
+                        <p class="subtitle">Escolha o formato que melhor se adapta à sua visualização</p>
+                    </div>
+                </div>
+
+                <!-- Seletor de Templates em Botões Grandes -->
+                <div class="template-selector-bar" role="tablist">
+                    <button class="template-btn active" data-template="pie" id="tplPie">
+                        <span class="tpl-icon">🥧</span>
+                        <span class="tpl-title">Pizza (Pie)</span>
+                        <span class="tpl-desc">Proporções e porcentagens</span>
+                    </button>
+                    <button class="template-btn" data-template="bar" id="tplBar">
+                        <span class="tpl-icon">📊</span>
+                        <span class="tpl-title">Barras (Bar)</span>
+                        <span class="tpl-desc">Comparação entre categorias</span>
+                    </button>
+                    <button class="template-btn" data-template="line" id="tplLine">
+                        <span class="tpl-icon">📈</span>
+                        <span class="tpl-title">Linha (Line)</span>
+                        <span class="tpl-desc">Tendências ao longo do tempo</span>
+                    </button>
+                    <button class="template-btn" data-template="histogram" id="tplHistogram">
+                        <span class="tpl-icon">📶</span>
+                        <span class="tpl-title">Histograma</span>
+                        <span class="tpl-desc">Distribuição e frequência</span>
+                    </button>
+                    <button class="template-btn" data-template="scatter" id="tplScatter">
+                        <span class="tpl-icon">🟣</span>
+                        <span class="tpl-title">Dispersão (Scatter)</span>
+                        <span class="tpl-desc">Relações e correlações</span>
+                    </button>
+                </div>
+
+                <!-- Explicação do Template Selecionado -->
+                <div class="template-info-box" id="templateInfoBox">
+                    <h3 id="templateTitle">🥧 Gráfico de Pizza (Proporções e Porcentagens)</h3>
+                    <p id="templateExplanation">Ideal para representar a divisão do todo, mostrando o percentual que cada fatia ocupa no orçamento.</p>
+                </div>
+
+                <!-- Opções de Seleção de Colunas e Controles de Exibição -->
+                <div class="custom-chart-controls">
+                    <div class="control-field">
+                        <label for="chartSelectCategory"><strong>Agrupar por (Eixo X / Legenda):</strong></label>
+                        <select id="chartSelectCategory" class="accessible-select"></select>
+                    </div>
+                    <div class="control-field">
+                        <label for="chartSelectValue"><strong>Métrica de Valor (Eixo Y):</strong></label>
+                        <select id="chartSelectValue" class="accessible-select"></select>
+                    </div>
+                    <div class="control-field" id="chartCountField">
+                        <label for="chartSelectCount"><strong>Quantidade no Gráfico:</strong></label>
+                        <select id="chartSelectCount" class="accessible-select">
+                            <option value="10" selected>10 registros (Padrão)</option>
+                            <option value="5">5 registros principais</option>
+                            <option value="15">15 registros</option>
+                            <option value="25">25 registros</option>
+                            <option value="all">Todos os registros</option>
+                        </select>
+                    </div>
+                    <div class="control-field" id="chartOrderField">
+                        <label for="chartSelectOrder"><strong>Ordem dos Dados:</strong></label>
+                        <select id="chartSelectOrder" class="accessible-select">
+                            <option value="desc" selected>Maiores valores primeiro</option>
+                            <option value="asc">Menores valores primeiro</option>
+                            <option value="original">Ordem original da planilha</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Indicador Acessível de Escala Dinâmica com Folga de Segurança -->
+                <div id="chartScaleBadge" class="chart-scale-badge" role="status" aria-live="polite">
+                    📏 <span id="chartScaleText">Escala vertical dinâmica configurada automaticamente.</span>
+                </div>
+
+                <!-- Canvas do Gráfico com Template Ativo -->
+                <div class="chart-canvas-wrapper" style="height: 380px; max-height: 380px; margin-top: 0.8rem;">
+                    <canvas id="customTemplateChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Seção do Comparador Interativo de Itens com Gráfico de Pizza -->
+            <section class="section-card comparison-section">
+                <div class="card-header">
+                    <span class="card-icon">⚖️</span>
+                    <div>
+                        <h2>Comparador de Itens e Gastos</h2>
+                        <p class="subtitle">Selecione dois itens quaisquer da planilha para ver a proporção no gráfico de pizza e a diferença de valores</p>
+                    </div>
+                </div>
+
+                <div class="comparator-inputs-grid">
+                    <div class="select-group">
+                        <label for="selectItemA"><strong>1º Item:</strong></label>
+                        <select id="selectItemA" class="accessible-select" aria-label="Selecione o primeiro item para comparar"></select>
+                    </div>
+                    <div class="comparator-vs">VS</div>
+                    <div class="select-group">
+                        <label for="selectItemB"><strong>2º Item:</strong></label>
+                        <select id="selectItemB" class="accessible-select" aria-label="Selecione o segundo item para comparar"></select>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: 1.5rem 0;">
+                    <button id="btnCompareItems" class="btn-primary" style="margin-top: 0; padding: 0.8rem 2rem;">
+                        ⚖️ Comparar estes 2 Itens
+                    </button>
+                    <button id="btnSpeakComparison" class="btn-action btn-audio" style="display: none;">
+                        🔊 Ouvir Comparação
+                    </button>
+                </div>
+
+                <!-- Resultado da Comparação -->
+                <div id="comparisonResultBox" class="comparison-result-box" style="display: none;">
+                    <div class="comparison-narrative" id="comparisonNarrativeText"></div>
+
+                    <div class="cards-grid" id="comparisonCardsGrid" style="margin: 1.5rem 0;">
+                        <!-- Cartões de Valores A vs B e Diferença -->
+                    </div>
+
+                    <div class="comparison-chart-box">
+                        <h3 class="chart-title">Proporção das Fatias (Quem representa mais)</h3>
+                        <div class="chart-canvas-wrapper">
+                            <canvas id="comparisonPieChartCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section-card">
+                <div class="card-header">
+                    <span class="card-icon">📋</span>
+                    <h2>Visualização Simplificada dos Lançamentos</h2>
+                </div>
+                <div class="table-responsive">
+                    <table id="dataTable" class="accessible-table">
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <!-- Controles de Navegação da Tabela -->
+                <div class="table-pagination-bar" id="tablePaginationBar">
+                    <p class="table-footer-note" id="tableCountNote"></p>
+                    <div class="pagination-buttons">
+                        <button id="btnPrevPage" class="btn-acc" style="display: none;">⬅️ Anterior</button>
+                        <span id="pageIndicator" class="page-indicator" style="display: none;"></span>
+                        <button id="btnNextPage" class="btn-acc" style="display: none;">Próxima ➡️</button>
+                        <button id="btnToggleAllRows" class="btn-action btn-secondary" style="margin-left: 1rem;">
+                            📄 Ver Todos os Lançamentos
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <!-- Quadro / Modal Interativo para Ver, Selecionar, Copiar e Colar o Resumo TXT -->
+        <div id="txtSummaryModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modalTxtTitle">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                        <span style="font-size: 1.8rem;">📝</span>
+                        <div>
+                            <h2 id="modalTxtTitle" style="font-size: 1.35rem; margin: 0; color: var(--text-primary);">Resumo em Texto (.txt)</h2>
+                            <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0;">Selecione, copie para a área de transferência ou baixe o arquivo</p>
+                        </div>
+                    </div>
+                    <button id="btnCloseTxtModal" class="btn-close-modal" aria-label="Fechar janela" title="Fechar janela (Esc)">✕</button>
+                </div>
+
+                <div class="modal-body">
+                    <label for="txtSummaryTextarea" class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden;">Conteúdo do resumo em texto</label>
+                    <textarea id="txtSummaryTextarea" class="txt-modal-textarea" readonly spellcheck="false" aria-label="Texto completo do resumo"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <div class="modal-footer-left">
+                        <button id="btnCopyTxtContent" class="btn-primary" style="margin-top: 0; padding: 0.75rem 1.4rem; font-size: 1.05rem;">
+                            📋 Copiar Texto
+                        </button>
+                        <button id="btnSelectAllTxt" class="btn-acc" style="min-height: 44px; padding: 0.75rem 1.2rem; font-size: 1.05rem;" title="Selecionar todo o texto da caixa">
+                            🔲 Selecionar Tudo
+                        </button>
+                        <button id="btnDownloadTxtDirect" class="btn-action btn-txt" style="margin-left: 0; min-height: 44px; padding: 0.75rem 1.2rem; font-size: 1.05rem;" title="Baixar como arquivo .txt no dispositivo">
+                            📥 Baixar Arquivo .txt
+                        </button>
+                    </div>
+                    <button id="btnCloseTxtModalBottom" class="btn-acc" style="min-height: 44px; padding: 0.75rem 1.2rem; font-size: 1.05rem;">
+                        Fechar
+                    </button>
+                </div>
+                <div id="copySuccessFeedback" class="copy-feedback-banner" style="display: none;" role="alert">
+                    ✅ Texto copiado para a área de transferência com sucesso! Pronto para colar (Ctrl+V).
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="app.js"></script>
+</body>
+</html>

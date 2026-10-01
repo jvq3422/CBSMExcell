@@ -1,0 +1,21 @@
+{
+  "name": "cbsm-excell",
+  "version": "1.0.0",
+  "description": "Resumo Fácil de Planilhas - Sistema universal, acessível e inteligente de simplificação, visualização e análise de planilhas Excel e CSV",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "excel",
+    "xlsx",
+    "csv",
+    "charts",
+    "accessibility",
+    "data-visualization",
+    "pdf-export",
+    "chartjs"
+  ],
+  "author": "jvq3422",
+  "license": "MIT"
+}
